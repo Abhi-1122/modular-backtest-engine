@@ -181,10 +181,10 @@ class BacktestEngine:
             })
 
         # Force close any open positions at end of day, at last known price.
-        # Works for both long and short positions: a long is closed by
-        # selling, a short is closed by buying back.
+        # Replace the final in-loop snapshot for this timestamp with the
+        # post-close portfolio state instead of appending a duplicate row.
         last_timestamp = futures_df.index[-1]
-        for symbol in portfolio.open_symbols():
+        for symbol in list(portfolio.open_symbols()):
             price = last_option_price.get(symbol)
             if price is None:
                 continue
@@ -203,15 +203,16 @@ class BacktestEngine:
 
         realized = portfolio.realized_pnl
         unrealized = portfolio.unrealized_pnl(last_option_price)
-        mtm_rows.append({
+
+        mtm_rows[-1] = {
             "timestamp": last_timestamp,
             "underlier": underlier,
             "realized_pnl": realized,
             "unrealized_pnl": unrealized,
             "total_pnl": realized + unrealized,
-        })
-        position_rows.append({
+        }
+        position_rows[-1] = {
             "timestamp": last_timestamp,
             "underlier": underlier,
-            "open_symbols": "",
-        })
+            "open_symbols": ",".join(portfolio.open_symbols()),
+        }

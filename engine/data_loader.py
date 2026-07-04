@@ -52,6 +52,7 @@ def _read_tick_csv(path: str) -> pd.DataFrame:
     ts = ts[~ts.isna()]
     df.insert(0, "Timestamp", ts)
     df = df.drop(columns=["Date", "Time"]).set_index("Timestamp").sort_index()
+    df = df[~df.index.duplicated(keep="last")]
     return df
 
 
